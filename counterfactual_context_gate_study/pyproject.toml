@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cdcv-gate-reference"
+version = "0.2.0"
+description = "Evidence-gated reference controller for counterfactual dialect-context verification"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+validation = ["jsonschema>=4.21,<5"]
+notebook = ["nbformat>=5.10,<6", "nbclient>=0.10,<1", "ipykernel>=6.29,<7"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

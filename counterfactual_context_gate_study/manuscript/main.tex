@@ -1,0 +1,1191 @@
+% Double-anonymous evidence-gated protocol/preprint for an Elsevier target.
+% Do not input the separate, non-anonymous title_page.tex in this review file.
+% Keep \resultslockedtrue until the sealed confirmatory run is complete.
+% VALIDATION_MARKERS: RESULTS_LOCKED COMMIT CLARIFY ABSTAIN
+\documentclass[preprint,12pt,authoryear]{elsarticle}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\biboptions{round,authoryear}
+\journal{Engineering Applications of Artificial Intelligence}
+
+\definecolor{lockred}{RGB}{145,30,30}
+\definecolor{softgray}{RGB}{245,245,245}
+
+\newif\ifresultslocked
+\resultslockedtrue
+
+\newcommand{\cdcv}{\textsc{CDCV-Gate}}
+\newcommand{\commit}{\ifmmode\operatorname{COMMIT}\else\textsc{Commit}\fi}
+\newcommand{\clarify}{\ifmmode\operatorname{CLARIFY}\else\textsc{Clarify}\fi}
+\newcommand{\abstain}{\ifmmode\operatorname{ABSTAIN}\else\textsc{Abstain/Escalate}\fi}
+\newcommand{\iedi}{\textsc{IEDI}}
+\newcommand{\resultcell}{\ifresultslocked\texttt{RESULTS\_LOCKED}\else
+  \textbf{INSERT VERIFIED RESULT}\fi}
+\newcommand{\resultlockbox}{%
+  \begin{center}
+  \fcolorbox{lockred}{softgray}{%
+    \begin{minipage}{0.92\linewidth}\small
+    \textcolor{lockred}{\textbf{RESULTS LOCKED.}}
+    This manuscript specifies a confirmatory study; it does not yet report a
+    completed empirical evaluation. Every result cell remains locked until a
+    community-validated, family-disjoint test set has been sealed, all
+    calibration decisions have been frozen, and the prespecified analysis has
+    been run. Synthetic design simulations are not empirical evidence.
+    \end{minipage}}
+  \end{center}}
+
+\begin{document}
+
+\begin{frontmatter}
+
+\title{When to Interpret and When to Ask: Counterfactual Dialect-Context
+Verification for Selective Intended-Meaning Resolution\tnoteref{tn-verification}}
+
+\tnotetext[tn-verification]{Protocol/preprint. Here ``verification'' denotes
+behavioral probing of prediction stability and candidate-relative
+responsiveness, together with schema, provenance-category, and conflict
+checks. It does not authenticate dialect identity, establish a speaker's
+private intention, or certify contextual truth.}
+
+\author{Anonymous for review}
+
+\begin{abstract}
+An utterance can be transcribed correctly yet interpreted incorrectly when its
+intended interactional meaning depends on local conventions, discourse goals,
+or a preceding speech act. Supplying a language model with more context does
+not by itself establish that the context is sufficient, coherent, or being
+used appropriately. We present the design of the Counterfactual
+Dialect-Context Verification and Clarification Gate (\cdcv), a
+schema-constrained inference-time mechanism for selective intended-meaning
+resolution. The mechanism scores fixed candidate meanings using an ephemeral,
+episode-specific context card; probes the model-selected candidate using
+instances to be community validated as hypothesis preserving or hypothesis
+contrasting;
+and aggregates confidence, candidate-conditioned invariance, targeted
+response, context-conflict, and validity signals. A behavioral-consistency
+controller calibrated on
+expression-family-disjoint data then commits to a sense, requests one
+validated context-slot clarification, or abstains and optionally escalates.
+We prespecify a benchmark design with 150 intended sealed-test families
+across English use in the United States, Nigeria, and Korea, with sufficient,
+alternate, underspecified, and
+contradictory action labels. The primary estimand is wrong-commit risk at
+matched coverage against an equal-call/token structured-context control;
+secondary outcomes quantify invariance, appropriate counterfactual response,
+clarification repair, per-community behavior, and computation. Current IEDID
+rows and inherited personas are restricted to discovery, development, schema
+construction, and lineage diagnostics. They are excluded from sealed-test
+gold. A separately labelled, consented text-prototype pilot is prespecified to
+assess bounded application feasibility after all models and thresholds are
+frozen. This protocol/preprint makes no performance or deployment claim; it
+defines the mechanism, evaluation contract, and evidence gates required for
+one. The gate does not verify semantic truth, ground-truth intended meaning,
+or context authenticity.
+\end{abstract}
+
+\begin{keyword}
+selective prediction \sep pragmatic ambiguity \sep World Englishes \sep
+counterfactual testing \sep clarification \sep context verification
+\end{keyword}
+
+\end{frontmatter}
+
+\resultlockbox
+
+\section{Introduction}
+
+Language systems can capture every word and still miss what a speaker is
+doing with those words. Pragmatic interpretation depends on linguistic
+co-text, common ground, discourse goals, activity type, and locally meaningful
+contextualization cues \citep{grice1975logic,gumperz1982discourse,
+clark1996using,frank2012predicting}. The resulting ambiguity is especially
+important across English-using communities: a familiar surface form can invite
+a dominant-variety reading even when the immediate episode supports a
+different locally conventional function. Conversely, a static cultural
+profile can overcorrect, treating a community-level regularity as a rule about
+an individual speaker.
+
+Most context-aware systems make a prediction after context injection. This
+leaves two distinct failure modes unresolved. First, the available context may
+be missing the one field that distinguishes plausible interpretations or may
+contain contradictions. Second, the model may claim confidence while failing
+to use context in a behaviorally coherent way. A safe runtime system therefore
+needs a decision boundary: it should commit only when the prediction survives
+candidate-indexed hypothesis-preserving probes and responds as specified to
+hypothesis-contrast probes; otherwise it should ask for one discriminating
+fact or withhold the interpretation. These tests characterize model behavior
+relative to the model-selected candidate; they do not establish that candidate
+as the speaker's true intended meaning.
+
+This paper develops that boundary as \cdcv. It is a calibrated
+behavioral-consistency gate, not a semantic-truth verifier, a mechanism for
+recovering private ground truth, or a context-authentication system. The gate
+checks allowed provenance and deterministic conflicts, then estimates whether
+a model's selected candidate behaves consistently under a reviewed probe
+schema. Human validation and calibrated error estimates remain necessary: a
+consistently wrong model can be invariant, and a probe-responsive model can
+still select the wrong sense.
+
+The study asks exactly two confirmatory questions:
+
+\begin{description}[leftmargin=0pt,style=nextline]
+\item[RQ1---Selective reliability.]
+At matched coverage, does counterfactual context verification reduce wrong
+committed interpretations compared with always-answer, confidence-only,
+self-consistency and standard context-injection baselines?
+
+\item[RQ2---Robustness and repair.]
+Does the proposed system remain invariant under hypothesis-preserving probes,
+respond as specified under hypothesis-contrast probes, and recover
+gold-\clarify{} cases using one targeted clarification?
+\end{description}
+
+Upon completion of the sealed evaluation, the intended safe contribution
+sentence is:
+
+\begin{quote}
+We design and evaluate a schema-constrained inference-time gate that probes a
+model-selected intended-meaning candidate with community-validated
+hypothesis-preserving and hypothesis-contrast context probes, then uses
+calibrated behavioral-consistency evidence for selective commitment, one
+targeted clarification, or abstention.
+\end{quote}
+
+Here, ``community validated'' applies to the curated benchmark instances and
+reviewed intervention operators. It must not be extended to arbitrary model-
+generated deployment instances without a separate fidelity check. The
+completed work is intended to contribute (i) an operational dual-probe
+behavioral-consistency mechanism, (ii) an action-labelled and expression-family-held-out
+three-community English-use benchmark, (iii) a one-question repair policy, and (iv) a paired
+equal-budget evaluation. These form a combination claim, not a claim to have
+invented selective prediction, context perturbation, clarification, or model
+routing individually.
+
+At the present protocol stage, the accurate claim is narrower: we design the
+mechanism and specify its evaluation; we do not yet claim improvement in any
+outcome.
+
+\section{Background and related work}
+
+\subsection{Pragmatic meaning, variation, and repair}
+
+Pragmatic meaning is an inference about situated communicative action rather
+than a context-free dictionary lookup. Contextualization cues connect an
+utterance to an activity and to participants' assumptions
+\citep{gumperz1982discourse}; common ground is updated across a sequence of
+joint actions \citep{clark1996using}. When understanding becomes problematic,
+conversation provides organized practices for repair
+\citep{schegloff1977repair}. Voice-interface studies likewise show that system
+use is sequentially embedded rather than a series of isolated commands
+\citep{porcheron2018voice}.
+
+Computational benchmarks now cover multiple pragmatic phenomena
+\citep{sravanthi-etal-2024-pub}, while dialect benchmarks document broad
+variation in NLP behavior \citep{ziems-etal-2023-multi,
+faisal-etal-2024-dialectbench}. Such work supports per-variety evaluation but
+does not justify demographic profiling. Dialect cues can also trigger harmful
+stereotypes or dominant-variety defaults \citep{fleisig-etal-2024-linguistic,
+hofmann2024dialect}. We consequently treat community labels as bounded
+resource indexes and self-described language histories, not as causal or
+essential properties of speakers. The data documentation and generalization
+boundary follow the principles of data statements
+\citep{bender-friedman-2018-data}.
+
+The three community resources are bounded by scholarship on postcolonial
+English varieties \citep{schneider2007postcolonial}, English use in Korea
+\citep{rudiger2019korean}, and situated Nigerian English pragmatic markers
+\citep{unuabonah2021abeg,honkanen2022markers}. These sources motivate
+expression discovery and contextual dimensions; they do not supply sealed
+labels or license a claim that one form has one meaning for an entire country.
+
+\subsection{Ambiguity detection and clarification}
+
+Language models often fail to recognize or represent multiple plausible
+readings \citep{liu-etal-2023-afraid}. Prior systems detect ambiguity, ask a
+clarification, and answer after the response
+\citep{lee-etal-2023-asking}. Repetition-based confidence is a strong baseline
+for selective answering of ambiguous questions
+\citep{cole-etal-2023-selectively}, and entropy over intent predictions can
+identify cases in which interaction helps
+\citep{zhang-choi-2025-clarify}. Clarification-question ranking by expected
+value of information predates current LLMs
+\citep{rao-daume-iii-2018-learning,white-etal-2021-open}.
+
+The closest current work uses structured uncertainty and cost-penalized
+expected value of perfect information to decide what to ask and when to stop
+in tool-calling agents \citep{suri-etal-2026-structured}. Human and model
+clarification behavior also differs by ambiguity type
+\citep{madge-etal-2025-referential}. Thus neither structured uncertainty nor
+information-value clarification is claimed as new here. Our question is
+whether a one-slot clarification policy can repair cases first rejected by a
+dialect-context verifier without creating excessive or identity-seeking
+questions.
+
+\subsection{Behavioral and counterfactual tests}
+
+Behavioral testing distinguishes invariance expectations from directional
+expectations \citep{ribeiro-etal-2020-beyond}. Contrast sets and
+counterfactually augmented data use small, meaningful changes that alter a
+validated label \citep{gardner-etal-2020-evaluating,
+kaushik2020counterfactual}. Recent pragmatic benchmarks already hold an
+utterance fixed while varying context, including manually verified context
+flips and controlled implicature contexts
+\citep{li-etal-2026-born,arai-ren-2026-drinq}. Context flips are therefore not
+a standalone novelty.
+
+The present mechanism uses both directions before one runtime decision:
+preserving variants test whether incidental context changes destabilize a
+prediction, whereas targeted changing variants test whether a minimally
+different discourse configuration licenses the reviewed alternate sense. Raw
+change is not rewarded; the model must move toward the validated target.
+
+\subsection{Selective prediction, calibration, and routing}
+
+Selective classification trades coverage for lower prediction risk
+\citep{geifman2019selectivenet}. Semantic entropy and rejection curves provide
+strong LLM uncertainty baselines \citep{farquhar2024semantic}. Conformal risk
+control provides a framework for calibrating bounded monotone losses under
+stated assumptions \citep{angelopoulos2024conformal}. We use calibrated
+selective prediction but claim no finite-sample guarantee unless the selected
+procedure's exchangeability and family-level conditions are met.
+
+Quality- and cost-aware routing between models is also established
+\citep{ding2024hybrid,ong2025routellm}. In \cdcv, routing is a bounded internal
+operation after unresolved verification, not a new output class or a presumed
+improvement. A routed prediction must pass the same gate, and degradations are
+logged.
+
+\subsection{Research lineage and remaining gap}
+
+Three prior systems provide directly relevant engineering baselines. IUUY described and
+prototyped a four-role interaction workflow and a hybrid dialect-table plus
+Gemini direction for speech ingestion, interpretation, user-facing
+clarification, and feedback provenance \citep{mba2025iuuy}. IEDI introduced
+the IEDID resource and formalized a thresholded fuzzy-retrieval path plus a
+proposed LLM fallback for three English-use settings \citep{mba2025iedi}. The
+frozen public notebook implements only global RapidFuzz matching at threshold
+75 and returns \texttt{Unknown} below threshold; it does not implement the
+paper's proposed LLM fallback \citep{iedinotebook}. KICS-W later described
+contextual persona/codebook prompting, \texttt{Tone\_Category} and
+\texttt{Linguistic\_Context} metadata, and a Gemini Pro--Flash dynamic-model-
+manager concept \citep{mba2026persona}. These published systems and the
+anonymized executable artifact are treated as foundations or reconstruction
+baselines, not contributions of the present paper.
+
+The cited literatures motivate testing a narrower combination: validated
+expression families drawn from three bounded English-use community resources;
+typed, ephemeral context cards;
+paired preserving and minimal sense-changing interventions; conflict and
+leakage audits; and one calibrated \commit/\clarify/\abstain controller under
+family holdout and equal compute. This is a bounded gap statement based on the
+cited audit, not an absolute first-ever or patentability claim.
+
+\section{Problem formulation and threat model}
+
+\subsection{Episode and candidate meanings}
+
+Each episode has physically separate runtime and evaluator views:
+\begin{align}
+r_e&=(x,c,\mathcal{M},\mathcal{T},\mathcal{Q}),\\
+g_e&=(y,a^*,J^*).
+\end{align}
+Here $x$ is the utterance with short co-text; $c$ is an interaction-scoped
+context card; $\mathcal{M}=\{m_1,\ldots,m_J\}$ is the frozen candidate set;
+$\mathcal{T}$ is a symmetric candidate-indexed probe library; and
+$\mathcal{Q}$ is the approved question bank. The sealed evaluator view holds
+the community-validated target sense $y$ when recoverable, reference action
+$a^*$, and acceptable clarification slots $J^*$. The inference process can
+mount $r_e$ but never $g_e$. The action space is
+\begin{equation}
+\mathcal{A}=\{\commit(m),\ \clarify(j),\ \abstain(r)\},
+\end{equation}
+where $j$ is a permitted context slot and $r$ is a reason code.
+
+The primary task supplies the same three candidates to every system: two
+validated competing senses and an \textsc{Other/Unlisted} option. This isolates
+selection and action policy from candidate recall. A secondary end-to-end
+condition generates candidates before scoring and reports candidate recall
+separately. If the validated sense is absent from $\mathcal{M}$, the event is a
+candidate-generation failure; it cannot be repaired by selector calibration.
+Selecting \textsc{Other/Unlisted} therefore forces candidate-coverage
+abstention and can never produce \commit.
+
+\subsection{Reference actions}
+
+The benchmark separates interpretation from action appropriateness:
+
+\begin{table}[t]
+\centering
+\caption{Episode evidence state and reference system action.}
+\label{tab:actions}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}p{0.31\linewidth}
+>{\raggedright\arraybackslash}p{0.24\linewidth}X}
+\toprule
+Evidence state & Reference action & Scoring rule \\
+\midrule
+Sufficient, coherent context & \commit(target) & A sense commitment is correct only if it equals the validated target. \\
+Alternate coherent context & \commit(contrast) & The alternate context licenses the independently validated contrasting sense. \\
+Discriminating field missing & \clarify(slot) & The slot must belong to the accepted question set. \\
+Contradictory, unsafe, or out of scope & \abstain(reason) & No sense commitment is permitted. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Threat model}
+
+We target five observable failure classes:
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Unsupported commitment:} the model selects a sense when context
+is missing, contradictory, or out of scope.
+\item \textbf{Context neglect:} the prediction remains fixed when a validated
+minimal change supports a contrastive sense.
+\item \textbf{Context overreaction:} a hypothesis-preserving probe changes the
+selected candidate.
+\item \textbf{Profile overreach:} a generalized variety cue dominates the
+episode or is treated as a deterministic identity rule.
+\item \textbf{Evaluation leakage:} test expressions, glosses, contexts, or
+labels occur in retrieval resources, prompts, profiles, or study-controlled
+development data.
+\end{enumerate}
+
+The mechanism does not defend against a deceptive user, compromised model
+provider, undetectable pretraining contamination, or arbitrary online
+counterfactual generation. Controllable leakage is an offline protocol audit,
+not a learned controller feature; otherwise the controller could learn to
+recognize benchmark artifacts.
+
+\section{Counterfactual Dialect-Context Verification and Clarification Gate}
+
+\subsection{Runtime flow}
+
+The mechanism is a pre-commit wrapper around a frozen scorer:
+
+\begin{center}
+\small
+\begin{tabular}{c@{ $\rightarrow$ }c@{ $\rightarrow$ }c@{ $\rightarrow$ }c}
+utterance + candidates & typed context card & candidate-indexed probes & calibrated gate\\
+&&& $\downarrow$\\[-0.2em]
+&&& \commit\quad\clarify\quad\abstain
+\end{tabular}
+\end{center}
+
+For the curated benchmark, every intervention instance will receive
+independent human validation. In a deployment prototype, the runtime may instantiate only a
+reviewed operator library. A generated instance that fails schema, fidelity,
+or conflict checks forces \abstain; model-generated context is never assumed
+valid because the same model can score it.
+
+\subsection{Episode-specific context card}
+
+The context card contains only fields that can alter the local linguistic
+inference:
+\begin{equation}
+c=(v,h,g,r,s,\pi),
+\end{equation}
+where $v$ is a voluntarily self-declared or experimentally supplied variety
+cue, $h$ is the preceding speech act/dialogue evidence, $g$ is the discourse
+goal, $r$ is the interaction role or relationship, $s$ is the
+situation/register, and $\pi$ records field-level provenance, missingness,
+confidence, and expiry. The card is limited to the current interaction.
+
+Race, ethnicity, nationality, religion, gender, sexuality, disability, age,
+biometrics, and other protected attributes are neither inferred nor
+counterfactually changed. The variety cue remains fixed across intervention
+pairs. Relationship \emph{roles} may be manipulated (for example, service
+encounter versus peer collaboration) only when the role, rather than personal
+identity, is the linguistically relevant variable.
+
+\subsection{Base scoring}
+
+In the end-to-end system, a frozen generator first proposes
+\begin{equation}
+\mathcal{M}=G_\phi(x)=\{m_1,m_2,\text{\textsc{Other/Unlisted}}\}
+\end{equation}
+from the utterance and dialogue co-text before context scoring. It cannot read
+the sealed label. The confirmatory primary condition replaces $G_\phi$ with
+the validated fixed set to isolate context-conditioned selection and gating.
+The secondary end-to-end condition restores $G_\phi$ and reports candidate
+recall, selection error conditional on recall, and total pipeline error. Thus
+the mechanism includes candidate generation without implying that the primary
+oracle-candidate experiment solves open-set sense discovery.
+
+The frozen scorer returns
+\begin{equation}
+p_0(m)=p_\theta(m\mid x,c,\mathcal{M}),\qquad
+\hat y=\arg\max_{m\in\mathcal{M}}p_0(m).
+\end{equation}
+The top-two margin and normalized entropy are
+\begin{align}
+\Delta_0 &=p_0(\hat y)-\max_{m\ne\hat y}p_0(m),\\
+H_0 &=-\frac{\sum_m p_0(m)\log p_0(m)}{\log|\mathcal{M}|}.
+\end{align}
+If the provider exposes no usable probabilities, a constrained ranking
+adapter produces scores and is calibrated separately. Free-form verbal
+confidence is not treated as probability without validation.
+
+\subsection{Hypothesis-preserving and hypothesis-contrast probe sets}
+
+The probe library is symmetric across the two non-
+\textsc{Other/Unlisted} candidates and is constructed without $g_e$. For each
+candidate $m$, define
+\begin{align}
+\mathcal{C}^{+}_e(m)
+ &=\{T_i^+(c,m):d(c,T_i^+(c,m))\leq\delta\},\\
+\mathcal{C}^{-}_e(m)
+ &=\{(T_j^-(c,m,t_j),t_j):d(c,T_j^-(c,m,t_j))\leq\delta,
+ \;t_j\ne m\}.
+\end{align}
+After base scoring, the gate selects $\mathcal{C}^{+}_e(\hat y)$ and
+$\mathcal{C}^{-}_e(\hat y)$ using its own prediction. An operator contract
+states that $T_i^+$ is a community-validated \emph{hypothesis-preserving
+probe} expected to retain the branch candidate and $T_j^-$ is a
+community-validated \emph{hypothesis-contrast probe} expected to support
+$t_j$; it does not state which sense is correct in the base episode. Thus a
+branch can test candidate-conditioned behavioral consistency but cannot verify
+semantic truth, the sealed intended meaning, or the authenticity of context.
+The scorer receives only the patched context and common candidate list. It
+does not receive relation names, target identifiers, validator scores, or
+sealed labels; the controller compares the returned distribution with the
+candidate-indexed operator contract afterward.
+The utterance, candidate set, and variety cue stay fixed. Changes are confined
+to approved slots such as discourse goal, preceding speech act, relationship
+role, setting, or situation. Hypothesis-contrast probes normally edit one
+discriminating slot and at most two. Candidate glosses, obvious label words,
+and identity proxies are prohibited.
+
+A frozen cross-record validator must run before inference. It confirms that
+the two distinct branch identifiers match exactly the two runtime
+non-\textsc{Other/Unlisted} candidates; every contrast target is the other
+core candidate; source context hashes match the base card; no probe references
+itself; each patch changes only declared permitted slots; variety and all
+fixed fields remain unchanged; and every branch and probe passed the
+prespecified acceptance rules. Failure makes the episode ineligible for
+commitment and is logged; no replacement branch may be chosen after scores are
+observed.
+
+For each $c_i^+$ and $c_j^-$, the same scorer produces distributions $p_i^+$
+and $p_j^-$. We compute label invariance and probability retention:
+\begin{align}
+I^+ &=\frac{1}{K_+}\sum_i
+\mathbf{1}[\arg\max_m p_i^+(m)=\hat y],\\
+P^+ &=\frac{1}{K_+}\sum_i p_i^+(\hat y),\\
+D^+ &=\frac{1}{K_+}\sum_i \operatorname{JSD}(p_0,p_i^+).
+\end{align}
+JSD uses base-2 logarithms and is bounded by one for the discrete
+distributions here \citep{lin1991divergence}.
+Targeted responsiveness and contrast margin are
+\begin{align}
+F^- &=\frac{1}{K_-}\sum_j
+\mathbf{1}[\arg\max_m p_j^-(m)=t_j],\\
+M^- &=\frac{1}{K_-}\sum_j
+\left[p_j^-(t_j)-p_j^-(\hat y)\right].
+\end{align}
+Validator-agreement weights are a prespecified sensitivity analysis. A model
+receives no credit for an arbitrary flip.
+
+\subsection{Verification vector and calibrated controller}
+
+The controller receives the prespecified vector
+\begin{equation}
+\mathbf{z}_e=[\Delta_0,1-H_0,I^+,P^+,1-D^+,F^-,M^-,V,U,\Gamma],
+\end{equation}
+where $V$ summarizes intervention validity, $U$ is relevant-slot
+completeness, and $\Gamma$ is a deterministic context-conflict score. Budget
+is an action constraint, not a correctness feature. Benchmark-leakage flags
+remain audit metadata and are not inputs.
+
+Given the small development split, the primary implementation reduces the
+features to four monotone groups---base confidence, preservation, targeted
+change, and context quality. Its form and weights are chosen/fitted only on
+development. A one-dimensional isotonic mapping fitted on the 60-family
+calibration split, with equal total weight per family, estimates
+\citep{zadrozny2002transforming}
+\begin{equation}
+q_e\approx P\{a^*=\commit(\hat y)\mid\mathbf{z}_e\},
+\end{equation}
+the probability that committing is both action appropriate and sense correct.
+The score form, monotonicity constraints, calibration procedure, and threshold
+$\tau$ are frozen before test access. A conformal-risk controller is a baseline
+or sensitivity analysis unless its family-level exchangeability conditions
+and loss definition support the claimed guarantee.
+
+Hard policy checks override confidence. A frozen eligibility mask marks an
+episode ineligible for commitment after an invalid card or probe bundle,
+prohibited field, unresolved hard contradiction, unsafe request,
+\textsc{Other/Unlisted} prediction, missing required discriminator,
+controllable leakage violation, out-of-domain input, disallowed provenance,
+or exhausted hard budget. A high $q_e$ cannot override the mask. Subject to
+those constraints,
+\begin{equation}
+\pi(e)=
+\begin{cases}
+\commit(\hat y), & q_e\ge\tau,\; V\ge v_{\min},\;\Gamma=0,\\
+\clarify(j^*), & \text{one permitted discriminating slot is unresolved and }J(q^*)\ge\kappa,\\
+\abstain(r), & \text{otherwise.}
+\end{cases}
+\end{equation}
+
+\subsection{One targeted clarification}
+
+The question bank contains neutral, answerable, community-reviewed templates
+mapped to one permitted slot. Let $\mathcal{Q}_e$ be the valid questions for
+the episode. The gate selects
+\begin{align}
+q^*=\arg\max_{q\in\mathcal{Q}_e}\;&
+\left[H(p_0)-\sum_{a\in\mathcal{A}_q}
+\widehat P(a\mid e,q)H\{p_\theta(\cdot\mid x,c\oplus(q,a))\}\right]
+\nonumber\\
+&-\lambda_I C_I(q)-\lambda_P C_P(q)-\lambda_C C_C(q),
+\end{align}
+where the terms penalize interaction burden, privacy sensitivity, and compute.
+$C_P(q)=\infty$ for a prohibited field. Answer priors and penalty weights come
+only from development/calibration data. The question must not reveal a
+candidate gloss or presuppose a community stereotype.
+
+The primary selector reads a frozen clarification-scenario manifest. For every
+approved case--question--answer scenario, the manifest records a normalized
+answer prior, a reusable probe-score or hypothetical-score reference, its
+source split and immutable hash, and the validated context-patch reference.
+The runtime view contains no reference action or sense. In the primary
+implementation, every score reference resolves to a distribution already
+produced within the allocated probe pass or to a development/calibration-only
+static table. Question ranking therefore adds zero sealed-test model calls.
+A missing or invalid scenario entry makes the question ineligible. Exploratory
+live hypothetical scoring is reported separately and charged to both the
+system and comparator budgets.
+
+For the controlled RQ2 experiment, an access-controlled harness releases one
+independently validated answer patch only after the system emits the matching
+question for that case and slot. A wrong or unnecessary question receives no
+helpful patch. The answer is not generated by a model and is not a live-user
+observation. The card records provenance as
+\texttt{standardized\_clarification}; the full verifier runs once more and
+must commit, route once, or abstain/escalate. A second question is prohibited.
+Clarification recovery therefore measures controlled repair potential, not
+natural user behavior.
+
+\subsection{Bounded larger-model routing}
+
+If context is complete and coherent but model uncertainty remains, a
+development-fitted router may estimate the larger model's incremental benefit.
+It routes only when expected benefit exceeds monetary/latency cost and privacy
+policy permits transmission. The routed answer passes the same verifier. We
+report helpful and harmful routes separately; a larger model is not presumed
+to be safer. Routing is inherited engineering, not the paper's novelty.
+
+With $K=K_++K_-$ interventions and scorer cost $T_f$, one verification pass is
+$O((1+K)T_f+K|\mathcal{M}|)$ after candidate construction. Features can be
+streamed in $O(|\mathcal{M}|)$ memory. In the confirmatory budget,
+$K_+=K_-=1$, so one pass makes three scoring calls. The primary question
+selector adds zero calls. All comparisons receive both equal maximum calls and
+equal mean token budgets. With at most one initial pass, one post-question
+pass, and one routed pass, the cap is nine scorer calls excluding candidate
+generation. A live hypothetical-call variant is exploratory and receives a
+larger, explicitly matched budget rather than being hidden inside this cap.
+
+\section{Counterfactual three-community English-use benchmark}
+
+\subsection{Role of current IEDID rows and personas}
+
+Current IEDID rows and inherited personas can be used for expression
+discovery, development examples, context-card schema construction, and
+lineage baselines. They cannot constitute sealed-test gold. The current
+resources were not designed with paired interventions, action labels, creator-
+validator separation, or reliable phrase/gloss leakage boundaries. Some live
+records also require deidentification, provenance, consent, and license review.
+
+Before use, the development snapshot is pinned, sanitized, and assigned row-
+level provenance. No test expression, sense gloss, intervention, question, or
+action label is sampled directly from it. The previously audited revision is
+recorded for provenance, but the final experimental revision remains unfrozen
+until governance checks pass.
+
+\subsection{Family design and split}
+
+An expression family is the independent unit. Each retained family has two
+validated contrasting senses and eight nested episode cases:
+
+\begin{enumerate}[leftmargin=*]
+\item canonical context for sense A;
+\item canonical context for sense B;
+\item one meaning-preserving variant of A;
+\item one meaning-preserving variant of B;
+\item one minimal meaning-changing variant from A toward B;
+\item one minimal meaning-changing variant from B toward A;
+\item one underspecified case labelled \clarify; and
+\item one contradictory or out-of-scope case labelled \abstain.
+\end{enumerate}
+
+For every runtime episode, a probe team separately constructs one
+hypothesis-preserving and one hypothesis-contrast operator for each of the two
+core candidate branches without seeing the sealed base action or sense. Thus
+both branches exist even when one is inconsistent with the original context.
+The model chooses a branch only from $\hat y$. Probe validators assess the
+candidate-relative operator contract but not the base reference label. These
+are community-validated candidate-indexed probes, not claims about the
+episode's unknown true meaning. No operator may insert a candidate gloss or
+obvious label word.
+
+The recommended retained sample is 30 development, 60 calibration, and 150
+sealed-test families. The test contains 50 families for each of the three
+community resources and 1,200 cases. The inferential sample is 150 families,
+not 1,200 independent observations. A 5,000-replication planning simulation
+supported 150 families for a pooled nominal five-percentage-point paired
+effect under its base assumptions. That simulation does not establish an
+effect, does not power within-community superiority, and supplies no result to
+this paper. At 70\% expected validation retention and balanced recruitment,
+approximately 345 candidate families (115 per community) are needed to retain
+240; a blinded validation pilot will update the recruitment target.
+
+The retained design contains exactly 1,920 base episode cases
+($240\times8$). Four symmetric probe instances are authored per base case
+(two candidate branches times one hypothesis-preserving and one
+hypothesis-contrast probe), yielding 7,680 probe instances and 38,400 probe
+ratings at five validators each. Base-case validation contributes 9,600
+ratings. Because there is one gold-\clarify{} case per family, the retained
+splits contain 240 such cases (150 in the sealed test). One accepted question
+per case would require 240 items and 1,200 ratings; the planned
+information-gain-versus-random comparison requires at least two accepted
+options per case, hence at least 480 accepted items and 2,400 ratings. If
+$Q$ candidate question items, including rejected items, are submitted, the
+actual question workload is $5Q$ with $Q\ge480$. The minimum accepted-item
+workload is therefore 50,400 ratings (9,600 base + 38,400 probe + 2,400
+question ratings), excluding rejected candidates, qualification tasks, and
+adjudication. The final $Q$, replacement allowance, completion-time estimate,
+compensation, platform fees, and adjudication budget are frozen before ethics
+approval and recruitment.
+
+\subsection{Community authorship and validation}
+
+Creators and validators are recruited through self-described relevant
+language histories and community familiarity, not nationality alone. A
+creator cannot validate the same bundle. Five independent variety-proficient
+validators first provide an open interpretation and then assess the candidate
+choice, system action, naturalness, coherence, minimality, leadingness, and
+sensitivity. Acceptance requires at least four of five target/action choices;
+median naturalness and coherence of at least four on a five-point scale;
+median minimality of at least four for meaning-changing edits; no detected
+gloss leakage; and no unresolved safety or provenance flag. Accepted questions
+also require median leadingness at most two (one means not leading).
+The governance process adapts participatory research principles while keeping
+decision authority and limitations explicit
+\citep{nekoto-etal-2020-participatory}.
+
+Agreement is reported as raw distributions, entropy, and Krippendorff's alpha
+where the scale permits \citep{artstein2008intercoder}. Consensus is an
+operational target label, not direct access to a speaker's private intention
+or evidence that every community member shares the judgment. Community
+partners adjudicate uncertain cases and review quoted examples and failure
+interpretations before release.
+Consent distinguishes expression authorship, base-case rating,
+candidate-indexed probe rating, clarification-question rating, possible
+quotation, retention, controlled release, and withdrawal. Recruitment proceeds
+only after the ethics and funding reviews confirm that the full workload,
+community balance, compensation, privacy controls, and rejected-item
+replacement allowance are feasible. If the design must be resized, power is
+resimulated and the protocol is updated before preregistration.
+
+\subsection{Leakage separation and sealing}
+
+Splits are expression-family disjoint. Before sealing, normalized expressions,
+paraphrases, sense glosses, profile phrases, prompts, and retrieval indexes are
+hashed and compared. The audit covers every IEDID snapshot used by a system,
+all inherited paper examples and profiles, few-shot prompts, development and
+calibration families, and clarification templates. Lexical and embedding
+alerts receive blinded human adjudication. Any controllable overlap is removed
+before test hashes are published.
+
+Proprietary foundation-model pretraining cannot be fully audited. The study
+therefore reports this residual limitation, runs memorization-oriented probes,
+and avoids claiming proof of contamination absence. Leakage flags are used to
+invalidate or qualify cases, never to improve the learned gate.
+
+The inference job mounts only a schema-valid runtime view, probe bundles,
+context cards, and question templates. It cannot mount reference actions,
+senses, case types, acceptable slots, or post-answer reference senses.
+Predictions and resource logs are hashed and frozen before a separate evaluator
+joins the access-controlled labels by case identifier. This separation is
+enforced in schema and package tests, not only stated in prose.
+
+\section{Experimental design}
+
+\subsection{Systems and baselines}
+
+All systems receive identical candidate ordering seeds and frozen inputs
+allowed by their condition. The comparison set is:
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{IEDI-NB:} frozen public-notebook fuzzy lookup, reported as a
+lineage/coverage diagnostic rather than a competitive engineering baseline;
+\item \textbf{Frozen contextual ranker:} a non-LLM bi-encoder or cross-encoder
+that scores the utterance, typed card, and candidate definition;
+\item \textbf{Direct LLM:} utterance and dialogue co-text, always answer;
+\item \textbf{Direct-Random@$C^*$:} a label-blind case-hash subsample of the
+always-answer commitments, included only to project that baseline to common
+coverage without using confidence;
+\item \textbf{KICS-W\_RECON:} paper-faithful persona/codebook reconstruction,
+with all prompt/codebook and router assumptions disclosed;
+\item \textbf{Structured context:} typed card without intervention probes,
+always answer;
+\item \textbf{Score gate:} token/ranking margin and normalized entropy as
+separate frozen scores;
+\item \textbf{Sample-agreement gate:} Cole-style repeated sampling and modal
+agreement;
+\item \textbf{Semantic-entropy gate:} meaning-clustered sampled outputs;
+\item \textbf{Calibrated gate:} isotonic/logistic mapping of the structured-
+context score;
+\item \textbf{Conformal-risk control:} a separate implementation with stated
+family-level unit, bounded loss, and exchangeability assumptions;
+\item \textbf{Probe-only aggregation:} the same symmetric probe library and
+budget as \cdcv, but a simple frozen aggregation without the joint controller;
+\item \textbf{Structured-uncertainty question gate:} the same question bank,
+answer harness, and cost penalties but no dual counterfactual verification;
+\item \textbf{\cdcv{}--no question:} full verification, commitment or
+abstention only;
+\item \textbf{\cdcv{}+one question:} full proposed repair policy; and
+\item \textbf{Equal-budget context control:} structured context with the same
+maximum calls and mean token allowance as \cdcv.
+\end{enumerate}
+
+The equal-budget context control is the primary comparator. It makes three
+independent stochastic calls with the identical utterance and structured card,
+uses the mean candidate distribution plus sample agreement, and fits the same
+one-dimensional isotonic calibration on the same family-weighted calibration
+split; it receives no intervention relation. Temperature, seeds, aggregation,
+maximum calls, and mean token cap are frozen. Dialogue-only sample agreement
+and semantic entropy receive the same call/token budgets because extra
+inference alone can improve reliability. Allocated and consumed calls/tokens
+are both reported.
+Model identifiers, provider dates, decoding, prompts, candidate order,
+hardware, batch size, cache policy, and retry rules are frozen.
+
+Always-clarify and oracle-slot-question policies are reported only as burden
+and controlled-repair bounds. A random validated question is the negative
+control. They are not competitive systems.
+The native always-answer result remains at coverage one; Direct-Random@$C^*$
+is its explicitly non-deployable matched-coverage projection. The confidence-
+only gate is the deployable selective version.
+
+\subsection{IEDI protocol correction}
+
+If every sealed family is removed from the frozen IEDI lexicon, IEDI-NB is
+expected to return \texttt{Unknown}. We report that regime only as a lineage
+coverage diagnostic. A separately labelled secondary regime may test
+\textbf{known expression, unseen context}: the expression-to-entry mapping is
+frozen, but every episode context, intervention, question, and action label is
+new. The two regimes are never pooled.
+
+\subsection{Prespecified bounded application pilot}
+
+A separately labelled, non-confirmatory pilot may begin only after the sealed
+benchmark analysis is complete and a pilot-specific sample-size or precision
+plan, interface build, models, prompts, thresholds, outcomes, and stopping
+rules have been frozen. The pilot embeds \cdcv{}+one question and the
+structured-uncertainty question comparator in a non-high-stakes, text-only
+mediation sandbox. It uses newly consented interactions that are disjoint from
+development, calibration, and confirmatory test families; pilot records cannot
+tune or replace any confirmatory component.
+
+Participants supply or confirm the intended interpretation before system
+feedback and confirm or reject the final interpretation after at most one
+clarification. Prespecified pilot outcomes are participant-confirmed
+wrong-commit burden, appropriate commitment or abstention, one-question repair,
+unnecessary questions, abandonment, interaction burden, latency, tokens,
+calls, memory, and cost. Recruitment requires separate ethics review and
+consent for participation, retention, quotation, and release. The interface
+collects no audio, infers no protected attribute, creates no persistent
+cultural profile, and triggers no high-stakes action. Analysis is limited to
+the frozen pilot setting with participant- and expression-family-clustered
+uncertainty; it supports no confirmatory superiority or real-world outcome
+claim.
+
+\subsection{Metrics}
+
+Let $N$ be the number of scored episodes, $C$ the set of committed episodes,
+and $W\subseteq C$ the wrong commitments. A commitment belongs to $W$ when
+the reference action is noncommit or when a commit-eligible episode receives
+the wrong sense. We report
+\begin{align}
+\text{coverage} &= |C|/N,\\
+\text{selective risk} &= |W|/|C|,\\
+\text{overall wrong-commit burden} &= |W|/N.
+\end{align}
+The primary outcome is selective risk at matched coverage over all eight case
+types; safe action-appropriate coverage is capped at $6/8=0.75$. The overall burden
+prevents conditional reporting from hiding abstention volume. We also report
+interpretation-only risk on the six commit-eligible cases and unsupported-
+commit rates on clarify/abstain cases. The full risk--coverage curve is
+descriptive. Over the prespecified common range $[C_{\min},C_{\max}]$,
+\begin{equation}
+\operatorname{AURC}=\frac{1}{C_{\max}-C_{\min}}
+\int_{C_{\min}}^{C_{\max}}R(C)\,dC,
+\end{equation}
+with lower values better; the trapezoidal, zero-commit, and tie rules are
+frozen in code.
+
+Required action and robustness metrics are the three-way action confusion
+matrix, action macro-F1, preservation invariance, preservation correctness,
+appropriate target-flip rate, flip coverage, clarification recovery,
+unnecessary-question rate, and final action-aware accuracy after one question.
+Candidate recall is reported in the generated-candidate condition. Calibration
+metrics include Brier score and expected calibration error
+\citep{brier1950verification,guo2017calibration}.
+
+Hypothesis-preservation denominators include every accepted
+hypothesis-preserving probe for an eligible non-Other base branch;
+preservation correctness additionally requires
+the sealed sense to remain correct. Targeted-response denominators include
+every accepted hypothesis-contrast probe actually run, and flip coverage reports the
+fraction of episodes with a valid non-Other branch. Clarification recovery is
+computed primarily over all gold-\clarify{} cases in the evaluated split
+($N=150$ in the sealed test). A success requires an acceptable matching
+question followed by a correct commit after the standardized answer; not
+asking, asking a nonmatching question, or failing to commit correctly counts
+as failure. Recovery conditional on actually asking a matching question is a
+secondary diagnostic and is accompanied by the matching-question rate.
+Unnecessary-question
+rate is the proportion of sufficient or abstain-labelled cases on which a
+question is asked. Final action-aware accuracy requires both the correct final
+action and, for commitments, the correct sense.
+
+Every metric is disaggregated by community resource with confidence intervals
+and a prespecified harm guard. Runtime reporting includes p50/p95 latency,
+input/output tokens, calls, peak memory, and cost under a dated price snapshot.
+Routing frequency, beneficial routes, and harmful routes are included. Failure
+analysis codes dominant-variety default, profile overreach, context neglect,
+context overreaction, conflict miss, unsafe question, invalid output, candidate
+omission, and controllable leakage.
+
+\subsection{Primary estimand and inference}
+
+RQ1 is evaluated before user clarification to isolate verification. The
+primary contrast is \cdcv{}--no question versus the equal-budget structured-
+context control. A common target coverage $C^*\leq0.75$ is selected on the
+calibration split, is no greater than the minimum eligible calibration
+coverage of the two primary methods, and is then frozen. Each method applies
+its hard eligibility mask before ranking. On test, it ranks only eligible
+cases under the frozen score rule without reading labels; a frozen case hash
+resolves boundary ties. Invalid cards or bundles, prohibited fields, hard
+conflicts, \textsc{Other/Unlisted}, missing discriminators, controllable
+leakage violations, out-of-scope inputs, and hard-budget failures are never
+forced to \commit. If fewer than $C^*N$ test cases are eligible, the matched
+target is reported as unattainable for that method, together with its observed
+coverage and risk. At attainable matched coverage we estimate
+\begin{equation}
+\Delta_R=R_{\mathrm{CDCV}}-R_{\mathrm{control}}.
+\end{equation}
+We use 10,000 paired expression-family bootstrap resamples, stratified by
+community, with method-specific eligibility masks preserved and score ranking
+recomputed only among eligible cases inside each resample. A replicate with an
+eligibility shortfall is flagged rather than repaired by forced commitment.
+The primary criterion is that the upper endpoint of the two-sided
+95\% confidence interval for $\Delta_R$ is below zero. At the separately
+calibration-frozen deployed threshold, proposed coverage may not be more than
+five percentage points below the control.
+
+RQ2 reports hypothesis preservation, targeted contrast response, and
+one-question repair. Its primary repair denominator is all gold-\clarify{}
+cases, not each policy's selectively rejected subset; conditional recovery is
+secondary. Holm
+correction is applied to four prespecified secondary contrasts: full versus
+no-preserving probes on preservation correctness; full versus no-changing
+probes on targeted response; \cdcv{}+question versus the structured-
+uncertainty question gate on clarification recovery; and information-gain
+versus random validated question on final action-aware accuracy.
+The sequential adjustment controls the familywise error rate
+\citep{holm1979simple}.
+Hierarchical/mixed-effects models are sensitivity analyses with
+cases nested in families; they do not replace the paired primary estimand.
+The 50-family community strata support heterogeneity and harm-guard reporting,
+not independent claims of superiority. A community is flagged when the upper
+95\% confidence endpoint permits a wrong-commit-risk increase greater than
+five percentage points relative to the control.
+
+\subsection{Ablations and negative controls}
+
+Mechanism ablations remove preserving probes, changing probes, conflict gates,
+calibration, clarification, and routing one at a time. A random validated
+question tests the information-value selector. Always-large routing measures
+whether gate-triggered routing adds value. Fixed versus generated candidates
+separate selection from recall. Mismatched context cards/personas,
+mismatched-family probes, and target-label-swapped interventions are negative
+controls for profile overreach, gloss leakage, and circularity.
+
+The same model must not generate and approve its own test interventions.
+Benchmark instances are independently authored and human validated. Any
+secondary online generator is frozen, uses reviewed operators, and is scored
+for fidelity separately.
+
+\subsection{Calibration and run lock}
+
+Development families select prompt wording, controller form, question costs,
+and operational caps. Calibration families fit score mappings and thresholds.
+Before test execution we freeze code and environment, split/data hashes,
+models and dates, prompts, random seeds, token/call budgets, estimands,
+confidence-interval code, and empty table shells. Each system is then executed
+once against sealed labels. A post-unsealing correction requires a dated
+deviation record and new run identifier.
+
+\section{Results}
+
+\resultlockbox
+
+Table~\ref{tab:rq1} is the confirmatory RQ1 shell. Every cell must be generated
+from the immutable sealed run; development, calibration, and simulated values
+are prohibited.
+
+\begin{table}[t]
+\centering
+\caption{RQ1 selective reliability on 150 sealed expression families. Values
+will include family-clustered 95\% confidence intervals.}
+\label{tab:rq1}
+\small
+\begin{tabular}{lcccc}
+\toprule
+System & Coverage & Selective risk & Overall wrong commit & AURC \\
+\midrule
+Direct LLM & \resultcell & \resultcell & \resultcell & \resultcell \\
+Direct-Random@$C^*$ & \resultcell & \resultcell & \resultcell & \resultcell \\
+KICS-W\_RECON & \resultcell & \resultcell & \resultcell & \resultcell \\
+Frozen contextual ranker & \resultcell & \resultcell & \resultcell & \resultcell \\
+Structured context & \resultcell & \resultcell & \resultcell & \resultcell \\
+Margin/normalized entropy & \resultcell & \resultcell & \resultcell & \resultcell \\
+Sample agreement, equal budget & \resultcell & \resultcell & \resultcell & \resultcell \\
+Semantic entropy, equal budget & \resultcell & \resultcell & \resultcell & \resultcell \\
+Isotonic/logistic calibrated gate & \resultcell & \resultcell & \resultcell & \resultcell \\
+Conformal-risk control & \resultcell & \resultcell & \resultcell & \resultcell \\
+Equal-budget context control & \resultcell & \resultcell & \resultcell & \resultcell \\
+Probe-only aggregation & \resultcell & \resultcell & \resultcell & \resultcell \\
+\cdcv{}--no question & \resultcell & \resultcell & \resultcell & \resultcell \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Frozen IEDI-NB lineage diagnostic. The regimes remain separate and
+are not pooled with the competitive RQ1 table. `Unknown' is mapped to
+abstention.}
+\label{tab:iedi}
+\small
+\begin{tabular}{lcccc}
+\toprule
+Regime & Coverage & Unknown/abstain & Selective risk & Overall wrong commit \\
+\midrule
+Family held out & \resultcell & \resultcell & \resultcell & \resultcell \\
+Known expression, unseen context & \resultcell & \resultcell & \resultcell & \resultcell \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{RQ2 counterfactual robustness before clarification.}
+\label{tab:rq2}
+\small
+\begin{tabularx}{\linewidth}{lXXXX}
+\toprule
+System & Preservation invariant & Preservation correct & Targeted flip & Flip coverage \\
+\midrule
+Structured context & \resultcell & \resultcell & \resultcell & \resultcell \\
+Sample agreement, equal budget & \resultcell & \resultcell & \resultcell & \resultcell \\
+Probe-only aggregation & \resultcell & \resultcell & \resultcell & \resultcell \\
+\cdcv{}--no question & \resultcell & \resultcell & \resultcell & \resultcell \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{RQ2 controlled one-question repair. Oracle-slot is an analysis upper
+bound, not a deployable comparator.}
+\label{tab:repair}
+\small
+\begin{tabularx}{\linewidth}{lXXXX}
+\toprule
+Question policy & Clarification recovery & Unnecessary question & Final action-aware accuracy & Mean questions \\
+\midrule
+Always clarify & \resultcell & \resultcell & \resultcell & \resultcell \\
+Random validated question & \resultcell & \resultcell & \resultcell & \resultcell \\
+Oracle slot (upper bound) & \resultcell & \resultcell & \resultcell & \resultcell \\
+Structured uncertainty/EVPI & \resultcell & \resultcell & \resultcell & \resultcell \\
+\cdcv{}+one question & \resultcell & \resultcell & \resultcell & \resultcell \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Measured engineering costs under matched budgets.}
+\label{tab:cost}
+\small
+\begin{tabular}{lcccccc}
+\toprule
+System & Calls & Tokens & p50 latency & p95 latency & Peak memory & Cost/episode \\
+\midrule
+Sample agreement & \resultcell & \resultcell & \resultcell & \resultcell & \resultcell & \resultcell \\
+Equal-budget context control & \resultcell & \resultcell & \resultcell & \resultcell & \resultcell & \resultcell \\
+\cdcv{}--no question & \resultcell & \resultcell & \resultcell & \resultcell & \resultcell & \resultcell \\
+\cdcv{}+one question & \resultcell & \resultcell & \resultcell & \resultcell & \resultcell & \resultcell \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The final Results section will additionally contain the action confusion
+matrix, risk--coverage curves, calibration plot, per-community estimates,
+ablations, negative controls, known-expression IEDI regime, routing benefit,
+and qualitative errors. No directional sentence will be written until the
+locked analysis supports it.
+
+\section{Discussion framework}
+
+The completed discussion will interpret a three-way trade-off rather than
+headline accuracy alone. A useful gate must lower harmful commitments without
+withdrawing service disproportionately from one community. It must also
+distinguish two sources of rejection: missing specification, which may be
+repairable through one question, and residual model uncertainty or invalid
+context, which should lead to abstention or controlled escalation.
+
+Several outcome patterns are informative even if the primary hypothesis
+fails. High hypothesis preservation with low correctness would reveal stable error.
+Frequent changes with low targeted-flip accuracy would reveal sensitivity
+without appropriate context use. Strong repair accompanied by a high
+unnecessary-question rate would indicate an intrusive policy. Lower risk
+caused solely by reduced coverage would not establish the intended technical
+effect. A larger routed model that degrades verified cases would challenge the
+assumption that scale is a safe fallback.
+
+The intervention analysis is behavioral, not causal evidence about people.
+Changing a discourse goal in a validated vignette tests a model decision
+boundary. It does not show that changing a human relationship or community
+identity causes a particular meaning in unconstrained interaction.
+
+\section{Limitations}
+
+First, the gate cannot prove that supplied context is factually true,
+authenticate its source, or recover a speaker's private ground truth. It can
+check declared provenance categories and conflicts and test candidate-relative
+model behavior under controlled probes. Second, hypothesis preservation and
+targeted contrast responsiveness do not guarantee semantic correctness;
+labels and calibration are indispensable.
+Third, two primary senses simplify pragmatic continua and multifunctionality.
+The \textsc{Other/Unlisted} option and end-to-end candidate-recall analysis
+expose but do not solve candidate omission.
+
+Fourth, human validation is bounded by recruited participants, tasks, and
+vignettes. Consensus does not represent all speakers. Fifth, counterfactuals
+may accidentally lead the model through lexical cues; minimality ratings,
+gloss-overlap audits, and label-swapped controls reduce but do not eliminate
+this risk. Sixth, proprietary-model training contamination cannot be excluded.
+Seventh, calibration may fail under model updates, temporal drift, or a new
+community; versions must be frozen and recalibration is required after change.
+
+Eighth, additional calls may make the gate too slow or costly. Equal-budget
+controls and measured engineering metrics are therefore part of the central
+test. Ninth, a larger model can be worse and routing may create privacy or
+cost risk. Finally, three English-using communities do not represent all World
+Englishes, and text-based intended-meaning selection does not establish ASR,
+prosody, affect, or real-world communication outcomes.
+
+\section{Ethics, privacy, and community governance}
+
+No data collection begins before institutional ethics review or documented
+exemption. Consent materials cover storage, quotation, controlled release, and
+withdrawal. Creators and validators are compensated, and community partners
+review labels, failure interpretations, and example quotations before public
+release. Before unsealing, only split and manifest hashes are public. After the
+analysis is frozen, releases prioritize the consent-authorized deidentified
+structured records required for independent table regeneration; raw audio and
+identity-bearing text are excluded by default.
+
+Context is self-declared or directly supported by the current interaction,
+expires with the episode, and remains visible and correctable. The system does
+not infer protected identities from language. Protected attributes are never
+intervention variables or clarification targets. Corrections enter a reviewed,
+provenance-preserving queue; they do not automatically rewrite a shared
+lexicon or model. High-stakes autonomous decisions and persistent cultural
+profiles are outside the deployment scope.
+
+\section{Reproducibility and artifact plan}
+
+The artifact package contains the typed schemas, study configuration, lineage
+register, validation script, and empty Results shells. Before evaluation it
+will add the ethics-approved annotation instrument, validator qualification
+rubric, deidentified aggregate agreement report, split hashes, prompt/model
+manifests, controller code, equal-budget scheduler, statistical analysis, and
+environment lock. Each prediction log records case, family, model, prompt,
+candidate order, controller and intervention hashes together with component
+scores, action reason, calls, tokens, latency, memory, and price snapshot.
+
+Subject to ethics, license, consent, provenance, deidentification, and community
+review, the post-analysis reproducibility bundle will contain deidentified
+cases and reference labels, probe contracts, approved questions and
+standardized clarification answers, frozen predictions, model/prompt/controller
+manifests, and evaluation code sufficient to regenerate every reported table.
+Public release is the default for authorized structured records; controlled
+access is used only when the applicable consent, license, or community review
+requires it, with every withheld field and reason documented. Identity-bearing
+source text and raw audio are never public by default. Hashes and aggregates
+support integrity auditing but are not presented as a substitute for the
+records needed to reproduce the reported analyses.
+
+\section{Conclusion}
+
+Context-aware interpretation needs a permission-to-commit mechanism. \cdcv
+operationalizes that mechanism by testing both invariance under reviewed
+candidate-relative hypothesis-preserving probes and specified response to
+reviewed hypothesis-contrast probes, then mapping calibrated behavioral-
+consistency evidence to commitment, one-slot
+clarification, or abstention. The paper's empirical claim remains deliberately
+open: only a sealed, family-disjoint, community-validated and equal-budget
+evaluation can show whether the gate actually reduces wrong commitments. The
+present draft fixes the question, method, comparison, and evidence boundary so
+that the eventual answer---positive, null, or adverse---can be reported without
+post hoc redesign.
+
+\section*{Declaration of generative AI and AI-assisted technologies}
+
+\textcolor{lockred}{\textbf{AUTHOR ACTION REQUIRED:}} Complete this statement
+according to the target journal's policy, identifying any language, code, or
+analysis assistance and confirming that the authors verified all content.
+
+\section*{Funding}
+
+\textcolor{lockred}{\textbf{AUTHOR ACTION REQUIRED.}}
+
+\section*{CRediT authorship contribution statement}
+
+\textcolor{lockred}{\textbf{AUTHOR ACTION REQUIRED; do not infer roles from
+author order.}}
+
+\section*{Declaration of competing interest}
+
+\textcolor{lockred}{\textbf{AUTHOR ACTION REQUIRED, including any relevant
+company affiliation or intellectual-property activity.}}
+
+\section*{Data availability}
+
+The study data do not yet exist. After the sealed analysis, the
+consent-authorized deidentified cases, labels, probe contracts, standardized
+clarification answers, frozen predictions, and table-regeneration code will be
+deposited under a persistent identifier. Records are placed under controlled
+access only where consent, license, or community governance requires it. Until
+those gates are met, this document remains a protocol/preprint and makes no
+completed-data or reproducibility claim.
+
+\bibliographystyle{elsarticle-harv}
+\bibliography{references}
+
+\end{document}

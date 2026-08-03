@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+.env
+.env.*
+
+# Access-controlled benchmark material and generated run outputs.
+counterfactual_context_gate_study/data/private/*
+!counterfactual_context_gate_study/data/private/README.md
+counterfactual_context_gate_study/runs/*
+!counterfactual_context_gate_study/runs/README.md
+
+# Non-anonymous metadata remains private until every named author consents.
+counterfactual_context_gate_study/manuscript/title_page.tex

@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/cdcv/clarification_scenario_manifest.schema.json",
+  "title": "Frozen clarification information-gain scenario manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifest_id",
+    "question_id",
+    "family_id",
+    "context_slot",
+    "candidate_set_hash",
+    "mode",
+    "prior_source",
+    "scenarios",
+    "additional_model_calls",
+    "frozen_before_test",
+    "manifest_hash"
+  ],
+  "properties": {
+    "manifest_id": {"type": "string", "minLength": 1},
+    "question_id": {"type": "string", "minLength": 1},
+    "family_id": {"type": "string", "minLength": 1},
+    "context_slot": {
+      "enum": [
+        "relationship_role",
+        "setting",
+        "formality",
+        "discourse_goal",
+        "preceding_speech_act",
+        "situation"
+      ]
+    },
+    "candidate_set_hash": {"$ref": "#/$defs/sha256"},
+    "mode": {"enum": ["PRIMARY_REUSE_ONLY", "CHARGED_HYPOTHETICAL"]},
+    "prior_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "manifest_ref", "manifest_hash"],
+      "properties": {
+        "type": {"enum": ["FROZEN_COMMUNITY_SLOT_PRIOR", "PRESPECIFIED_UNIFORM"]},
+        "manifest_ref": {"type": ["string", "null"]},
+        "manifest_hash": {"$ref": "#/$defs/nullableSha256"}
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/scenario"}
+    },
+    "additional_model_calls": {"type": "integer", "minimum": 0},
+    "frozen_before_test": {"const": true},
+    "manifest_hash": {"$ref": "#/$defs/sha256"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"mode": {"const": "PRIMARY_REUSE_ONLY"}}, "required": ["mode"]},
+      "then": {
+        "properties": {
+          "additional_model_calls": {"const": 0},
+          "scenarios": {
+            "items": {
+              "properties": {
+                "score_source": {
+                  "properties": {"source_type": {"const": "REUSED_PROBE_SCORES"}}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "nullableSha256": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/sha256"}
+      ]
+    },
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["answer_id", "prior_probability", "score_source"],
+      "properties": {
+        "answer_id": {"type": "string", "minLength": 1},
+        "prior_probability": {"type": "number", "minimum": 0, "maximum": 1},
+        "score_source": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["source_type", "probe_id", "score_record_ref"],
+              "properties": {
+                "source_type": {"const": "REUSED_PROBE_SCORES"},
+                "probe_id": {"type": "string", "minLength": 1},
+                "score_record_ref": {"type": "string", "minLength": 1}
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["source_type", "score_record_ref", "scorer_call_charged"],
+              "properties": {
+                "source_type": {"const": "FROZEN_HYPOTHETICAL_SCORES"},
+                "score_record_ref": {"type": "string", "minLength": 1},
+                "scorer_call_charged": {"const": true}
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

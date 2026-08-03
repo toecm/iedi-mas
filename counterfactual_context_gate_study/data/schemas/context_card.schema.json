@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/cdcv/context_card.schema.json",
+  "title": "Ephemeral dialect-context card",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["episode_id", "mode", "scope", "expires_at", "fields", "conflicts"],
+  "properties": {
+    "episode_id": {"type": "string", "minLength": 1},
+    "mode": {"enum": ["benchmark", "deployment"]},
+    "scope": {"const": "current_interaction_only"},
+    "expires_at": {"type": ["string", "null"], "format": "date-time"},
+    "variety_cue": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value", "provenance", "retain_after_episode"],
+          "properties": {
+            "value": {"type": "string", "minLength": 1},
+            "provenance": {
+              "enum": ["self_declared", "experimentally_supplied"]
+            },
+            "retain_after_episode": {"const": false}
+          }
+        }
+      ]
+    },
+    "fields": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "relationship_role": {"$ref": "#/$defs/contextField"},
+        "setting": {
+          "allOf": [{"$ref": "#/$defs/contextField"}],
+          "description": "Physical or institutional location/activity type; excludes discourse purpose."
+        },
+        "formality": {
+          "allOf": [{"$ref": "#/$defs/contextField"}],
+          "description": "Interactional register on the study's frozen scale."
+        },
+        "discourse_goal": {"$ref": "#/$defs/contextField"},
+        "preceding_speech_act": {"$ref": "#/$defs/contextField"},
+        "situation": {
+          "allOf": [{"$ref": "#/$defs/contextField"}],
+          "description": "Immediate event state or constraint; excludes physical setting and discourse goal."
+        }
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["slot", "code", "severity"],
+        "properties": {
+          "slot": {
+            "enum": [
+              "relationship_role",
+              "setting",
+              "formality",
+              "discourse_goal",
+              "preceding_speech_act",
+              "situation",
+              "variety_cue"
+            ]
+          },
+          "code": {"type": "string", "minLength": 1},
+          "severity": {
+            "enum": ["warning", "hard_stop"],
+            "description": "Only hard_stop sets the controller conflict override; warnings are logged features."
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "contextField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "provenance", "confidence", "retain_after_episode"],
+      "properties": {
+        "value": {"type": ["string", "null"]},
+        "provenance": {
+          "enum": [
+            "self_declared",
+            "dialogue_evidence",
+            "task_metadata",
+            "user_clarification",
+            "standardized_clarification",
+            "benchmark_assignment",
+            "missing"
+          ]
+        },
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "retain_after_episode": {"const": false}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"provenance": {"const": "missing"}}, "required": ["provenance"]},
+          "then": {"properties": {"value": {"type": "null"}}},
+          "else": {"properties": {"value": {"type": "string", "minLength": 1}}}
+        }
+      ]
+    },
+    "deploymentField": {
+      "allOf": [
+        {"$ref": "#/$defs/contextField"},
+        {
+          "not": {
+            "properties": {"provenance": {"enum": ["benchmark_assignment", "standardized_clarification"]}},
+            "required": ["provenance"]
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"mode": {"const": "deployment"}}, "required": ["mode"]},
+      "then": {
+        "properties": {
+          "fields": {
+            "properties": {
+              "relationship_role": {"$ref": "#/$defs/deploymentField"},
+              "setting": {"$ref": "#/$defs/deploymentField"},
+              "formality": {"$ref": "#/$defs/deploymentField"},
+              "discourse_goal": {"$ref": "#/$defs/deploymentField"},
+              "preceding_speech_act": {"$ref": "#/$defs/deploymentField"},
+              "situation": {"$ref": "#/$defs/deploymentField"}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

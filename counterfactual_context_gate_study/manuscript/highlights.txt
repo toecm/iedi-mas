@@ -1,0 +1,5 @@
+- Behavioral verification gates commitment without authenticating dialect identity or contextual truth.
+- Preserving and sense-changing probes test complementary model behavior.
+- The controller commits, asks one targeted question, or abstains.
+- The prespecified design uses 150 families from three bounded English-use resources.
+- Equal-budget evaluation centers wrong-commit risk at matched coverage.

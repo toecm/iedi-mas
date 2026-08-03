@@ -1,0 +1,20 @@
+{
+  "source_repository": "toecm/iedi-mas",
+  "source_path": "CA_IEDI_0803.ipynb",
+  "source_default_branch": "main",
+  "source_commit": "5cff1e509efb09c24f9ac7e30075b6a131ee6fbc",
+  "source_git_blob_sha1": "5b83ce8dbdc0e147637ef499b7c4f7deabfbb653",
+  "source_utf8_sha256": "0287daf13a8a863f267a8cd50acc1e6563ab2a64c852873bf59aa561bc616eaa",
+  "source_size_bytes": 338909,
+  "source_url_pinned": "https://github.com/toecm/iedi-mas/blob/5cff1e509efb09c24f9ac7e30075b6a131ee6fbc/CA_IEDI_0803.ipynb",
+  "source_url_mutable": "https://github.com/toecm/iedi-mas/blob/main/CA_IEDI_0803.ipynb",
+  "source_commit_timestamp_utc": "2026-08-03T14:13:15Z",
+  "retrieved_for_audit_utc": "2026-08-03T14:43:37Z",
+  "license_status": "TO_BE_CONFIRMED_BEFORE_REDISTRIBUTING_SOURCE_CONTENT",
+  "derivative_path": "notebooks/CA_IEDI_0803.ipynb",
+  "published_repository_mirror_path": "CA_IEDI_0803.ipynb",
+  "derivation_mode": "clean_protocol_aligned_rewrite",
+  "source_outputs_copied": false,
+  "source_code_copied_verbatim": false,
+  "notes": "The derivative preserves provenance and research lineage but excludes stale Colab outputs, credentials interfaces, mutable dataset writes, public UI launch, audio/ASR, IPFS, blockchain, Hardhat, and disconnected benchmark cells."
+}
