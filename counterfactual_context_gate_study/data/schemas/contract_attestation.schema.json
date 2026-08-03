@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/cdcv/contract_attestation.schema.json",
+  "title": "Gold-free intervention and clarification contract attestation",
+  "description": "An evaluator-issued manifest. Only accepted records may be projected into a sealed runtime.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifest_id",
+    "case_id",
+    "family_id",
+    "context_card_hash",
+    "candidate_set_hash",
+    "intervention_manifest_hash",
+    "question_manifest_hash",
+    "reviewed_value_manifest_hash",
+    "required_context_slots",
+    "review_status",
+    "schema_status",
+    "cross_record_status",
+    "safety_status",
+    "constructed_without_sealed_labels",
+    "protected_attribute_manipulated",
+    "gloss_leakage_detected",
+    "variety_fixed",
+    "integrity_manifest_hash"
+  ],
+  "properties": {
+    "manifest_id": {"type": "string", "minLength": 1},
+    "case_id": {"type": "string", "minLength": 1},
+    "family_id": {"type": "string", "minLength": 1},
+    "context_card_hash": {"$ref": "#/$defs/sha256"},
+    "candidate_set_hash": {"$ref": "#/$defs/sha256"},
+    "intervention_manifest_hash": {"$ref": "#/$defs/sha256"},
+    "question_manifest_hash": {"$ref": "#/$defs/sha256"},
+    "reviewed_value_manifest_hash": {"$ref": "#/$defs/sha256"},
+    "required_context_slots": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/slot"}
+    },
+    "review_status": {"$ref": "#/$defs/status"},
+    "schema_status": {"$ref": "#/$defs/status"},
+    "cross_record_status": {"$ref": "#/$defs/status"},
+    "safety_status": {"$ref": "#/$defs/status"},
+    "constructed_without_sealed_labels": {"const": true},
+    "protected_attribute_manipulated": {"const": false},
+    "gloss_leakage_detected": {"const": false},
+    "variety_fixed": {"const": true},
+    "integrity_manifest_hash": {"$ref": "#/$defs/sha256"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"review_status": {"const": "ACCEPTED"}},
+        "required": ["review_status"]
+      },
+      "then": {
+        "properties": {
+          "schema_status": {"const": "ACCEPTED"},
+          "cross_record_status": {"const": "ACCEPTED"},
+          "safety_status": {"const": "ACCEPTED"}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "status": {"enum": ["DEMO_ONLY", "CANDIDATE", "ACCEPTED", "REJECTED"]},
+    "slot": {
+      "enum": [
+        "relationship_role",
+        "setting",
+        "formality",
+        "discourse_goal",
+        "preceding_speech_act",
+        "situation"
+      ]
+    }
+  }
+}

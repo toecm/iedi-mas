@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/cdcv/clarification_answer.schema.json",
+  "title": "Sealed standardized clarification-answer harness record",
+  "description": "A validated answer is released only after a matching question. Its post-answer reference sense remains evaluator-only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "acceptable_question_id",
+    "answer_id",
+    "context_slot",
+    "answer_private_ref",
+    "answer_context_patch_ref",
+    "question_manifest_hash",
+    "post_answer_intervention_bundle_ref",
+    "post_answer_intervention_bundle_hash",
+    "post_answer_reference_sense_id",
+    "validation_status",
+    "safety_approved",
+    "answer_manifest_hash"
+  ],
+  "properties": {
+    "case_id": {"type": "string", "minLength": 1},
+    "acceptable_question_id": {"type": "string", "minLength": 1},
+    "answer_id": {"type": "string", "minLength": 1},
+    "context_slot": {
+      "enum": [
+        "relationship_role",
+        "setting",
+        "formality",
+        "discourse_goal",
+        "preceding_speech_act",
+        "situation"
+      ]
+    },
+    "answer_private_ref": {"type": "string", "minLength": 1},
+    "answer_context_patch_ref": {"type": "string", "minLength": 1},
+    "question_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "post_answer_intervention_bundle_ref": {"type": "string", "minLength": 1},
+    "post_answer_intervention_bundle_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "post_answer_reference_sense_id": {"type": "string", "minLength": 1},
+    "validation_status": {"const": "accepted"},
+    "safety_approved": {"const": true},
+    "answer_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

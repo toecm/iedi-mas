@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/cdcv/runtime_episode.schema.json",
+  "title": "Gold-free runtime episode",
+  "description": "This is the only episode view visible to a system under evaluation. It contains no reference action, reference sense, or accepted clarification slot.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "family_id",
+    "split",
+    "evaluation_regime",
+    "community_resource",
+    "utterance_private_ref",
+    "utterance_hash",
+    "candidate_senses",
+    "candidate_set_hash",
+    "context_card_ref",
+    "context_card_hash",
+    "intervention_bundle_ref",
+    "intervention_bundle_hash",
+    "question_bank_ref",
+    "question_bank_hash",
+    "contract_attestation_ref",
+    "contract_attestation_hash",
+    "runtime_manifest_hash"
+  ],
+  "properties": {
+    "case_id": {"type": "string", "minLength": 1},
+    "family_id": {"type": "string", "minLength": 1},
+    "split": {"enum": ["development", "calibration", "sealed_test"]},
+    "evaluation_regime": {"enum": ["family_held_out", "known_expression_unseen_context"]},
+    "community_resource": {
+      "enum": ["american_english", "nigerian_english", "korean_english"]
+    },
+    "utterance_private_ref": {"type": "string", "minLength": 1},
+    "utterance_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "candidate_senses": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["candidate_id", "label_private_ref", "definition_private_ref"],
+        "properties": {
+          "candidate_id": {"type": "string"},
+          "label_private_ref": {"type": "string"},
+          "definition_private_ref": {"type": "string"}
+        }
+      },
+      "contains": {
+        "type": "object",
+        "properties": {"candidate_id": {"const": "OTHER_UNLISTED"}},
+        "required": ["candidate_id"]
+      },
+      "minContains": 1,
+      "maxContains": 1
+    },
+    "candidate_set_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "context_card_ref": {"type": "string", "minLength": 1},
+    "context_card_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "intervention_bundle_ref": {"type": "string", "minLength": 1},
+    "intervention_bundle_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "question_bank_ref": {"type": "string", "minLength": 1},
+    "question_bank_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "contract_attestation_ref": {"type": "string", "minLength": 1},
+    "contract_attestation_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "runtime_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

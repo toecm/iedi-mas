@@ -1,0 +1,281 @@
+{
+  "schema_version": "1.0.0",
+  "status": "PLANNED_RESULTS_LOCKED",
+  "study_id": "cdcv_gate_three_community_english_use_v1",
+  "title": "When to Interpret and When to Ask: Counterfactual Dialect-Context Verification for Selective Intended-Meaning Resolution",
+  "mechanism": "Counterfactual Dialect-Context Verification and Clarification Gate",
+  "mechanism_short": "CDCV-Gate",
+  "reference_implementation": {
+    "notebook": "notebooks/CA_IEDI_0803.ipynb",
+    "upstream_provenance": "notebooks/UPSTREAM_PROVENANCE.json",
+    "evidence_status": "DEMO_ONLY_NO_EMPIRICAL_RESULTS",
+    "default_run_mode": "DEMO",
+    "demo_split_allowlist": ["development"],
+    "sealed_test_allowed_in_demo_mode": false,
+    "saved_notebook_outputs_allowed": false,
+    "fixed_candidate_provider_status": "DEMO_ONLY",
+    "model_backed_candidate_generator_status": "NOT_CONFIGURED",
+    "external_empirical_systems_status": "NOT_CONFIGURED",
+    "sealed_contract_status_required": "ACCEPTED",
+    "demo_contract_status": "DEMO_ONLY",
+    "scorer_interface_version": "CandidateScorer/2",
+    "scorer_forbidden_inputs": [
+      "reference_action",
+      "reference_sense_id",
+      "case_type",
+      "acceptable_clarification_slots",
+      "probe_type",
+      "expected_relation",
+      "target_candidate_id",
+      "validator_scores"
+    ],
+    "real_sealed_inference_requires_separate_process": true
+  },
+  "communities": [
+    "american_english",
+    "nigerian_english",
+    "korean_english"
+  ],
+  "splits": {
+    "development": {"families": 30, "families_per_community": 10},
+    "calibration": {"families": 60, "families_per_community": 20},
+    "sealed_test": {"families": 150, "families_per_community": 50}
+  },
+  "cases_per_retained_family": {
+    "canonical_sense_a": 1,
+    "canonical_sense_b": 1,
+    "preserving_sense_a": 1,
+    "preserving_sense_b": 1,
+    "changing_a_to_b": 1,
+    "changing_b_to_a": 1,
+    "underspecified_clarify": 1,
+    "conflict_abstain": 1,
+    "total": 8
+  },
+  "sealed_test_cases": 1200,
+  "candidate_family_target_at_70pct_retention": 345,
+  "validation": {
+    "independent_validators_per_bundle": 5,
+    "minimum_target_agreement": 4,
+    "naturalness_scale": [1, 5],
+    "minimum_median_naturalness": 4,
+    "creator_may_validate_own_bundle": false,
+    "open_response_before_candidates": true
+  },
+  "primary_task": {
+    "candidate_mode": "fixed_three_candidate_selection",
+    "independent_unit": "expression_family",
+    "primary_outcome": "wrong_commit_rate_at_matched_coverage",
+    "primary_comparator": "equal_budget_structured_context_without_verification",
+    "bootstrap_repetitions": 10000,
+    "bootstrap_cluster": "expression_family",
+    "bootstrap_strata": "community",
+    "planning_alternative_absolute_risk_difference": 0.05,
+    "maximum_fixed_point_coverage_loss": 0.05,
+    "confidence_level": 0.95,
+    "matched_coverage_target": null,
+    "matched_coverage_target_frozen_on": "calibration",
+    "maximum_action_appropriate_coverage": 0.75,
+    "test_label_dependent_threshold_tuning": false,
+    "hard_eligibility_mask_required": true,
+    "common_feasible_coverage_rule": "min(requested_target, minimum_calibration_eligible_coverage_across_primary_methods)",
+    "test_target_shortfall_policy": "report_unattainable_and_achieved_coverage_never_force_commit"
+  },
+  "controller": {
+    "actions": ["COMMIT", "CLARIFY", "ABSTAIN_ESCALATE"],
+    "maximum_clarification_questions": 1,
+    "minimum_preservation_invariance": 1.0,
+    "minimum_targeted_response": 1.0,
+    "probe_thresholds_frozen_on": "protocol_before_data",
+    "calibrator_and_thresholds_use_calibration_only": true,
+    "test_time_threshold_tuning": false,
+    "larger_model_only_after_unresolved_gate": true
+  },
+  "intervention_policy": {
+    "runtime_probe_branches": "symmetric_for_every_non_other_candidate",
+    "branch_selection_source": "model_base_prediction_only",
+    "sealed_reference_labels_visible_to_inference": false,
+    "cross_record_integrity_validation_required": true,
+    "contract_attestation_type": "ContractAttestation",
+    "contract_attestation_schema": "data/schemas/contract_attestation.schema.json",
+    "required_context_slots_source": "ContractAttestation.required_context_slots",
+    "caller_supplied_missing_slot_hint_allowed": false,
+    "caller_supplied_validity_booleans_allowed": false,
+    "source_and_result_context_hashes_recomputed": true,
+    "attestation_integrity_hash_must_be_in_frozen_trusted_manifest": true,
+    "reviewed_value_manifest_required": true,
+    "context_completeness_denominator": "ContractAttestation.required_context_slots",
+    "sealed_accepts_demo_only_attestation": false,
+    "permitted_slots": [
+      "relationship_role",
+      "setting",
+      "formality",
+      "discourse_goal",
+      "preceding_speech_act",
+      "situation"
+    ],
+    "protected_identity_interventions_prohibited": true,
+    "variety_cue_must_be_self_declared_or_experimentally_supplied": true
+  },
+  "runtime_probe_budget": {
+    "preserving_probes_per_selected_candidate_branch": 1,
+    "meaning_changing_probes_per_selected_candidate_branch": 1,
+    "scorer_calls_per_verification_pass_including_base": 3,
+    "maximum_passes_with_one_clarification_and_one_route": 3,
+    "maximum_scorer_calls_excluding_candidate_generation": 9,
+    "enforcement_type": "BudgetEnvelope",
+    "maximum_input_tokens": null,
+    "maximum_output_tokens": null,
+    "maximum_cost_usd": null,
+    "empirical_token_and_cost_caps_status": "NOT_CONFIGURED",
+    "freeze_token_and_cost_caps_with_model_prompt_and_pricing_manifests": true,
+    "equal_budget_control_receives_identical_call_input_token_and_output_token_allocation": true,
+    "equal_budget_control_uses_same_sealed_admission_boundary": true,
+    "demo_token_counts_are_empirical_allocations": false
+  },
+  "clarification_scenarios": {
+    "schema": "data/schemas/clarification_scenario_manifest.schema.json",
+    "answer_schema": "data/schemas/clarification_answer.schema.json",
+    "primary_mode": "PRIMARY_REUSE_ONLY",
+    "primary_additional_model_calls": 0,
+    "score_source": "already_scored_selected_branch_probes",
+    "answer_prior": "frozen_community_slot_or_prespecified_uniform",
+    "included_within_nine_call_cap": true,
+    "answer_broker_interface": "ClarificationAnswerBroker",
+    "released_answer_type": "ReleasedAnswer",
+    "released_answer_runtime_schema": "data/schemas/released_answer.schema.json",
+    "demo_broker": "StaticDemoAnswerBroker",
+    "demo_broker_status": "DEMO_ONLY",
+    "release_binding": ["case_id", "question_id", "context_slot", "answer_id", "question_manifest_hash", "answer_manifest_hash"],
+    "release_only_after_matching_question": true,
+    "sealed_answer_hash_must_be_in_frozen_trusted_manifest": true,
+    "wrong_or_unavailable_answer_action": "ABSTAIN_ESCALATE:CLARIFICATION_UNRESOLVED",
+    "post_answer_branch_source": "ReleasedAnswer.post_answer_branches",
+    "post_answer_branches_validated_separately": true,
+    "reuse_initial_card_branches_after_answer": false
+  },
+  "annotation_workload": {
+    "retained_families": 240,
+    "base_cases_per_family": 8,
+    "base_cases_total": 1920,
+    "validators_per_base_case": 5,
+    "base_case_ratings_total": 9600,
+    "candidate_branches_per_case": 2,
+    "probes_per_branch": 2,
+    "probe_instances_total": 7680,
+    "validators_per_probe": 5,
+    "probe_ratings_total": 38400,
+    "candidate_questions_per_family": 2,
+    "candidate_question_instances_total": 480,
+    "validators_per_question": 5,
+    "question_ratings_total": 2400,
+    "minimum_structured_ratings_total": 50400,
+    "excludes_screening_adjudication_and_replacement_work": true
+  },
+  "systems": {
+    "implementation_status": "NOT_CONFIGURED",
+    "notebook_demo_components": [
+      "fixed_candidate_provider",
+      "scripted_scorer",
+      "cdcv_gate_orchestration",
+      "equal_budget_control_orchestration"
+    ],
+    "primary_comparator": "equal_budget_structured_context",
+    "required": [
+      "iedi_nb_lineage_diagnostic",
+      "frozen_contextual_ranker",
+      "direct_llm_always_answer",
+      "direct_random_matched_coverage_projection",
+      "kics_w_recon",
+      "structured_context_always_answer",
+      "margin_gate",
+      "normalized_entropy_gate",
+      "sample_agreement_equal_budget",
+      "semantic_entropy_equal_budget",
+      "isotonic_or_logistic_calibrated_gate",
+      "conformal_risk_control_separate",
+      "probe_only_aggregation",
+      "structured_uncertainty_evpi_question_gate",
+      "equal_budget_structured_context",
+      "cdcv_no_question",
+      "cdcv_one_question"
+    ],
+    "equal_budget_structured_context": {
+      "calls_per_initial_pass": 3,
+      "input": "identical_utterance_and_structured_card_each_call",
+      "aggregation": "mean_candidate_distribution_plus_sample_agreement",
+      "calibration": "same_family_weighted_calibration_split",
+      "receives_probe_relations": false
+    },
+    "analysis_bounds": [
+      "always_clarify",
+      "oracle_slot_question",
+      "random_validated_question",
+      "always_large_route"
+    ]
+  },
+  "iedid": {
+    "allowed_uses": [
+      "expression_discovery",
+      "development_examples",
+      "context_schema_construction",
+      "lineage_baseline"
+    ],
+    "sealed_test_gold_allowed": false,
+    "audited_development_revision": "0bc6208b0a28f95268771df58d4f9983193c4ff9",
+    "experiment_revision": "TO_BE_PINNED_AFTER_GOVERNANCE_GATES"
+  },
+  "result_policy": {
+    "synthetic_results_as_empirical_evidence": false,
+    "demo_traces_as_empirical_evidence": false,
+    "manuscript_result_marker": "RESULTS_LOCKED",
+    "sealed_test_run_id": null
+  },
+  "access_separation": {
+    "runtime_episode_schema": "data/schemas/runtime_episode.schema.json",
+    "sealed_label_schema": "data/schemas/sealed_label.schema.json",
+    "join_labels_only_after_prediction_freeze": true,
+    "inference_process_may_mount_sealed_labels": false,
+    "runtime_forbidden_evaluator_fields": [
+      "reference_action",
+      "reference_sense_id",
+      "case_type",
+      "acceptable_clarification_slots"
+    ],
+    "clarification_answers": "validated_broker_answer_released_only_after_matching_question",
+    "accepted_attestation_contains_action_or_sense_label": false,
+    "separate_evaluator_process_required": true
+  },
+  "application_pilot": {
+    "status": "PLANNED_NOT_STARTED_RESULTS_LOCKED",
+    "scope": "non_high_stakes_text_only_sandbox",
+    "confirmatory_inference_allowed": false,
+    "activation_gate": "only_after_confirmatory_analysis_and_separate_frozen_protocol",
+    "sample_size_policy": "power_or_precision_plan_frozen_before_pilot_access",
+    "reuse_confirmatory_test_for_tuning": false,
+    "new_participant_work_requires_ethics_review": true,
+    "claims_limited_to_pilot_setting": true
+  },
+  "minimum_public_release": {
+    "release_before_ethics_license_consent_and_community_review": false,
+    "required_artifacts": [
+      "study_protocol",
+      "typed_schemas",
+      "reference_gate_source_and_tests",
+      "analysis_code",
+      "split_and_manifest_hashes",
+      "model_prompt_and_controller_manifests",
+      "deidentified_cases_and_labels",
+      "probe_contracts",
+      "standardized_clarification_answers",
+      "frozen_predictions",
+      "table_regeneration_code",
+      "aggregate_agreement_and_result_tables",
+      "data_statement_and_known_restrictions"
+    ],
+    "deidentified_structured_records_released_when_permitted": true,
+    "raw_identity_bearing_text_public_by_default": false,
+    "controlled_access_or_auditable_aggregates_when_public_release_prohibited": true,
+    "withheld_artifacts_and_reasons_must_be_listed": true
+  }
+}

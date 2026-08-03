@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/cdcv/sealed_label.schema.json",
+  "title": "Access-controlled evaluator label",
+  "description": "This record is never mounted in the inference process. It is joined to frozen predictions by case_id only inside the sealed evaluator.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "family_id",
+    "case_type",
+    "reference_action",
+    "reference_sense_id",
+    "reference_reason_code",
+    "acceptable_clarification_slots",
+    "validation_status",
+    "leakage_audit_ref",
+    "label_manifest_hash"
+  ],
+  "properties": {
+    "case_id": {"type": "string", "minLength": 1},
+    "family_id": {"type": "string", "minLength": 1},
+    "case_type": {
+      "enum": [
+        "canonical_sense_a",
+        "canonical_sense_b",
+        "preserving_sense_a",
+        "preserving_sense_b",
+        "changing_a_to_b",
+        "changing_b_to_a",
+        "underspecified_clarify",
+        "conflict_abstain"
+      ]
+    },
+    "reference_action": {"enum": ["COMMIT", "CLARIFY", "ABSTAIN_ESCALATE"]},
+    "reference_sense_id": {"type": ["string", "null"]},
+    "reference_reason_code": {"type": ["string", "null"]},
+    "acceptable_clarification_slots": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "relationship_role",
+          "setting",
+          "formality",
+          "discourse_goal",
+          "preceding_speech_act",
+          "situation"
+        ]
+      }
+    },
+    "validation_status": {"const": "accepted"},
+    "leakage_audit_ref": {"type": "string", "minLength": 1},
+    "label_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"reference_action": {"const": "COMMIT"}}, "required": ["reference_action"]},
+      "then": {"properties": {"reference_sense_id": {"type": "string"}}}
+    },
+    {
+      "if": {"properties": {"reference_action": {"const": "CLARIFY"}}, "required": ["reference_action"]},
+      "then": {"properties": {"acceptable_clarification_slots": {"minItems": 1}, "reference_sense_id": {"type": "null"}}}
+    },
+    {
+      "if": {"properties": {"reference_action": {"const": "ABSTAIN_ESCALATE"}}, "required": ["reference_action"]},
+      "then": {"properties": {"reference_sense_id": {"type": "null"}, "reference_reason_code": {"type": "string", "minLength": 1}}}
+    }
+  ]
+}

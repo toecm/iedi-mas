@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/cdcv/clarification_question.schema.json",
+  "title": "Validated one-slot clarification question",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "question_id",
+    "family_id",
+    "candidate_set_hash",
+    "context_slot",
+    "question_private_ref",
+    "question_hash",
+    "scenario_manifest_ref",
+    "scenario_manifest_hash",
+    "answer_domain",
+    "leadingness_median",
+    "naturalness_median",
+    "privacy_approved",
+    "interaction_cost",
+    "privacy_cost",
+    "compute_cost",
+    "validator_count",
+    "validation_status"
+  ],
+  "properties": {
+    "question_id": {"type": "string"},
+    "family_id": {"type": "string"},
+    "candidate_set_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "context_slot": {
+      "enum": [
+        "relationship_role",
+        "setting",
+        "formality",
+        "discourse_goal",
+        "preceding_speech_act",
+        "situation"
+      ]
+    },
+    "question_private_ref": {"type": "string"},
+    "question_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "scenario_manifest_ref": {"type": "string", "minLength": 1},
+    "scenario_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "answer_domain": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["answer_id", "label_private_ref"],
+        "properties": {
+          "answer_id": {"type": "string", "minLength": 1},
+          "label_private_ref": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "leadingness_median": {
+      "type": "number", "minimum": 1, "maximum": 5,
+      "description": "1 = not leading; 5 = strongly leading. Accepted questions require <= 2."
+    },
+    "naturalness_median": {"type": "number", "minimum": 1, "maximum": 5},
+    "privacy_approved": {"type": "boolean"},
+    "interaction_cost": {"type": "number", "minimum": 0},
+    "privacy_cost": {"type": "number", "minimum": 0},
+    "compute_cost": {"type": "number", "minimum": 0},
+    "validator_count": {"const": 5},
+    "validation_status": {"enum": ["accepted", "rejected"]}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"validation_status": {"const": "accepted"}}, "required": ["validation_status"]},
+      "then": {
+        "properties": {
+          "privacy_approved": {"const": true},
+          "leadingness_median": {"maximum": 2},
+          "naturalness_median": {"minimum": 4}
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,263 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/cdcv/prediction_record.schema.json",
+  "title": "Auditable gold-free CDCV prediction record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "system_id",
+    "case_id",
+    "family_id",
+    "source_model_id",
+    "runtime_manifest_hash",
+    "context_card_hash",
+    "intervention_bundle_hash",
+    "candidate_set_hash",
+    "prompt_hash",
+    "candidate_order_hash",
+    "controller_hash",
+    "calibration_manifest_hash",
+    "code_commit",
+    "pricing_snapshot_hash",
+    "base_scores",
+    "probe_scores",
+    "pass_trace",
+    "verification",
+    "initial_action",
+    "final_action",
+    "committed_sense_id",
+    "clarification_trace",
+    "routing_trace",
+    "reason_code",
+    "resource_use",
+    "timestamp_utc"
+  ],
+  "properties": {
+    "run_id": {"type": "string", "minLength": 1},
+    "system_id": {"type": "string", "minLength": 1},
+    "case_id": {"type": "string", "minLength": 1},
+    "family_id": {"type": "string", "minLength": 1},
+    "source_model_id": {"type": "string", "minLength": 1},
+    "runtime_manifest_hash": {"$ref": "#/$defs/sha256"},
+    "context_card_hash": {"$ref": "#/$defs/sha256"},
+    "intervention_bundle_hash": {"$ref": "#/$defs/sha256"},
+    "candidate_set_hash": {"$ref": "#/$defs/sha256"},
+    "prompt_hash": {"$ref": "#/$defs/sha256"},
+    "candidate_order_hash": {"$ref": "#/$defs/sha256"},
+    "controller_hash": {"$ref": "#/$defs/nullableSha256"},
+    "calibration_manifest_hash": {"$ref": "#/$defs/nullableSha256"},
+    "code_commit": {"type": "string", "minLength": 7},
+    "pricing_snapshot_hash": {"$ref": "#/$defs/nullableSha256"},
+    "base_scores": {"$ref": "#/$defs/scores"},
+    "probe_scores": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["probe_id", "probe_type", "source_candidate_id", "target_candidate_id", "scores", "validity_weight"],
+        "properties": {
+          "probe_id": {"type": "string", "minLength": 1},
+          "probe_type": {"enum": ["PRESERVING", "MEANING_CHANGING"]},
+          "source_candidate_id": {"type": "string", "minLength": 1},
+          "target_candidate_id": {"type": ["string", "null"]},
+          "scores": {"$ref": "#/$defs/scores"},
+          "validity_weight": {"type": "number", "minimum": 0, "maximum": 1}
+        }
+      }
+    },
+    "pass_trace": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "pass_name",
+          "model_id",
+          "base_scores",
+          "selected_branch",
+          "prompt_hashes",
+          "probe_scores_hash",
+          "verification",
+          "action",
+          "reason_code"
+        ],
+        "properties": {
+          "pass_name": {"enum": ["initial", "post_question", "routing"]},
+          "model_id": {"type": "string", "minLength": 1},
+          "base_scores": {"$ref": "#/$defs/scores"},
+          "selected_branch": {"type": ["string", "null"]},
+          "prompt_hashes": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 3,
+            "items": {"$ref": "#/$defs/sha256"}
+          },
+          "probe_scores_hash": {"$ref": "#/$defs/sha256"},
+          "verification": {"$ref": "#/$defs/passVerification"},
+          "action": {"$ref": "#/$defs/action"},
+          "reason_code": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "top_two_margin",
+        "normalized_entropy",
+        "preservation_invariance",
+        "preservation_probability",
+        "mean_preserving_jsd_base2",
+        "targeted_response",
+        "mean_changing_target_margin",
+        "intervention_validity",
+        "context_completeness",
+        "conflict_severity",
+        "estimated_safe_commit_probability",
+        "allocated_budget_remaining"
+      ],
+      "properties": {
+        "top_two_margin": {"type": "number", "minimum": 0, "maximum": 1},
+        "normalized_entropy": {"type": "number", "minimum": 0, "maximum": 1},
+        "preservation_invariance": {"type": "number", "minimum": 0, "maximum": 1},
+        "preservation_probability": {"type": "number", "minimum": 0, "maximum": 1},
+        "mean_preserving_jsd_base2": {"type": "number", "minimum": 0, "maximum": 1},
+        "targeted_response": {"type": "number", "minimum": 0, "maximum": 1},
+        "mean_changing_target_margin": {"type": "number", "minimum": -1, "maximum": 1},
+        "intervention_validity": {"type": "number", "minimum": 0, "maximum": 1},
+        "context_completeness": {"type": "number", "minimum": 0, "maximum": 1},
+        "conflict_severity": {"enum": ["none", "warning", "hard_stop"]},
+        "estimated_safe_commit_probability": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "allocated_budget_remaining": {"type": "integer", "minimum": 0}
+      }
+    },
+    "initial_action": {"$ref": "#/$defs/action"},
+    "final_action": {"$ref": "#/$defs/action"},
+    "committed_sense_id": {"type": ["string", "null"]},
+    "clarification_trace": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["question_id", "context_slot", "question_utility", "scenario_manifest_hash", "answer_id", "answer_patch_hash", "post_question_verification_hash"],
+          "properties": {
+            "question_id": {"type": "string", "minLength": 1},
+            "context_slot": {"type": "string", "minLength": 1},
+            "question_utility": {"type": "number"},
+            "scenario_manifest_hash": {"$ref": "#/$defs/sha256"},
+            "answer_id": {"type": ["string", "null"]},
+            "answer_patch_hash": {"$ref": "#/$defs/nullableSha256"},
+            "post_question_verification_hash": {"$ref": "#/$defs/nullableSha256"}
+          }
+        }
+      ]
+    },
+    "routing_trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["routed", "target_model_id", "predicted_benefit", "pre_route_action", "post_route_verification_hash"],
+      "properties": {
+        "routed": {"type": "boolean"},
+        "target_model_id": {"type": ["string", "null"]},
+        "predicted_benefit": {"type": ["number", "null"]},
+        "pre_route_action": {"type": ["string", "null"]},
+        "post_route_verification_hash": {"$ref": "#/$defs/nullableSha256"}
+      }
+    },
+    "reason_code": {"type": "string", "minLength": 1},
+    "resource_use": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allocated", "consumed", "stages"],
+      "properties": {
+        "allocated": {"$ref": "#/$defs/resources"},
+        "consumed": {"$ref": "#/$defs/resources"},
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["stage", "resources"],
+            "properties": {
+              "stage": {"enum": ["candidate_generation", "base", "probes", "question_selection", "post_question", "routing"]},
+              "resources": {"$ref": "#/$defs/resources"}
+            }
+          }
+        }
+      }
+    },
+    "timestamp_utc": {"type": "string", "format": "date-time"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"final_action": {"const": "COMMIT"}}, "required": ["final_action"]},
+      "then": {"properties": {"committed_sense_id": {"type": "string", "not": {"const": "OTHER_UNLISTED"}}}}
+    },
+    {
+      "if": {"properties": {"final_action": {"enum": ["CLARIFY", "ABSTAIN_ESCALATE"]}}, "required": ["final_action"]},
+      "then": {"properties": {"committed_sense_id": {"type": "null"}}}
+    },
+    {
+      "if": {"properties": {"initial_action": {"const": "CLARIFY"}}, "required": ["initial_action"]},
+      "then": {"properties": {"clarification_trace": {"type": "object"}}}
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "nullableSha256": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/sha256"}
+      ]
+    },
+    "action": {"enum": ["COMMIT", "CLARIFY", "ABSTAIN_ESCALATE"]},
+    "scores": {
+      "type": "object",
+      "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1},
+      "minProperties": 3
+    },
+    "passVerification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "top_two_margin",
+        "normalized_entropy",
+        "preservation_invariance",
+        "preservation_probability",
+        "mean_preserving_jsd_base2",
+        "targeted_response",
+        "mean_changing_target_margin",
+        "intervention_validity",
+        "context_completeness",
+        "conflict_severity"
+      ],
+      "properties": {
+        "top_two_margin": {"type": "number", "minimum": 0, "maximum": 1},
+        "normalized_entropy": {"type": "number", "minimum": 0, "maximum": 1},
+        "preservation_invariance": {"type": "number", "minimum": 0, "maximum": 1},
+        "preservation_probability": {"type": "number", "minimum": 0, "maximum": 1},
+        "mean_preserving_jsd_base2": {"type": "number", "minimum": 0, "maximum": 1},
+        "targeted_response": {"type": "number", "minimum": 0, "maximum": 1},
+        "mean_changing_target_margin": {"type": "number", "minimum": -1, "maximum": 1},
+        "intervention_validity": {"type": "number", "minimum": 0, "maximum": 1},
+        "context_completeness": {"type": "number", "minimum": 0, "maximum": 1},
+        "conflict_severity": {"enum": ["none", "warning", "hard_stop"]}
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["calls", "input_tokens", "output_tokens", "latency_ms", "peak_memory_mb", "cost_usd"],
+      "properties": {
+        "calls": {"type": "integer", "minimum": 0},
+        "input_tokens": {"type": "integer", "minimum": 0},
+        "output_tokens": {"type": "integer", "minimum": 0},
+        "latency_ms": {"type": "number", "minimum": 0},
+        "peak_memory_mb": {"type": ["number", "null"], "minimum": 0},
+        "cost_usd": {"type": ["number", "null"], "minimum": 0}
+      }
+    }
+  }
+}
