@@ -1,0 +1,29 @@
+{
+  "paper_id": "paper5",
+  "architecture": "Context-aware four-agent system with DMM and fail-closed provenance",
+  "local_threshold": 0.80,
+  "ambiguity_margin": 0.05,
+  "pro_ambiguity_threshold": 0.58,
+  "cold_start_requests": 50,
+  "flash_model_id": "gemini-2.5-flash",
+  "pro_model_id": "gemini-2.5-pro",
+  "historical_paper_models": ["gemini-2.0-flash", "gemini-2.0-pro"],
+  "require_validated_persona": true,
+  "require_acoustic_evidence_for_affect_claim": true,
+  "require_ipfs_verification": true,
+  "require_finalized_chain_commitment": true,
+  "claim_requirements": {
+    "authenticated_native_speaker_authorizer": true,
+    "calibrated_affect_model": true,
+    "deployed_quorum_contract": true,
+    "verified_ipfs_durability": true,
+    "hugging_face_commit_replication": true,
+    "distributed_agent_transport": true,
+    "two_party_gradio_ux": true,
+    "frozen_native_speaker_saer_evaluation": true
+  },
+  "metric_contract": {
+    "saer_is_distance_lower_is_better": true,
+    "semantic_resolution_is_one_minus_saer": true
+  }
+}
