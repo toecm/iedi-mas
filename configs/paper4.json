@@ -1,0 +1,13 @@
+{
+  "paper_id": "paper4",
+  "architecture": "Edge ASR and compact semantic-payload cloud interpretation",
+  "flash_model_id": "gemini-2.5-flash",
+  "pro_model_id": "gemini-2.5-pro",
+  "claim_requirements": {
+    "separate_edge_cloud_hosts": true,
+    "measured_raw_audio_file": true,
+    "applied_and_logged_network_emulator_or_cellular_hardware": true,
+    "monolithic_cloud_baseline": true,
+    "repeated_raw_trials_with_confidence_intervals": true
+  }
+}

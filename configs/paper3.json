@@ -1,0 +1,17 @@
+{
+  "paper_id": "paper3",
+  "architecture": "Persona-first ambiguity-aware Pro/Flash DMM",
+  "local_threshold": 0.80,
+  "ambiguity_margin": 0.05,
+  "pro_ambiguity_threshold": 0.48,
+  "flash_model_id": "gemini-2.5-flash",
+  "pro_model_id": "gemini-2.5-pro",
+  "historical_paper_models": ["gemini-1.5-flash", "gemini-1.5-pro"],
+  "require_validated_persona": true,
+  "return_three_for_unresolved_polysemy": true,
+  "claim_requirements": {
+    "native_speaker_validated_personas": true,
+    "third_curated_i_beg_sense": true,
+    "held_out_persona_ablation": true
+  }
+}
